@@ -1,6 +1,7 @@
+
 const { OAuth2Client } = require("google-auth-library");
 const jwt = require("jsonwebtoken");
-
+const User = require("../models/User");
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const googleLogin = async (req, res) => {
@@ -26,18 +27,35 @@ const googleLogin = async (req, res) => {
       email: payload.email,
       picture: payload.picture,
     };
+let existingUser = await User.findOne({
+  where: {
+    googleId: user.googleId,
+  },
+});
+if (!existingUser) {
+  existingUser = await User.create({
+    googleId: user.googleId,
+    name: user.name,
+    email: user.email,
+    picture: user.picture,
+  });
 
+  console.log("✅ New user created in database.");
+} else {
+  console.log("✅ Existing user logged in.");
+}
     // Generate our own JWT
     const token = jwt.sign(
-      {
-        googleId: user.googleId,
-        email: user.email,
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "7d",
-      }
-    );
+  {
+    id: existingUser.id,
+    googleId: existingUser.googleId,
+    email: existingUser.email,
+  },
+  process.env.JWT_SECRET,
+  {
+    expiresIn: "7d",
+  }
+);
 
     return res.status(200).json({
       message: "Login Successful",
