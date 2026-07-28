@@ -25,7 +25,7 @@ sequelize
   .then(async () => {
     console.log("✅ PostgreSQL Connected Successfully!");
 
-    await sequelize.sync();
+    await sequelize.sync({ alter: true });
 
     console.log("✅ Database Synced Successfully!");
   })
